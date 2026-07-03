@@ -33,6 +33,15 @@ import {
   markOtpSent,
 } from "./services/complaintsApi";
 
+// Where the logout button sends the user. This dashboard has no login page of
+// its own, so point VITE_LOGIN_URL at the shared/portal login (falls back to
+// a local "/login" route).
+const LOGIN_URL = import.meta.env.VITE_LOGIN_URL || "/login";
+
+// localStorage keys any auth data may be stored under (kept in sync with the
+// sibling dashboards so a logout here clears the same session data).
+const AUTH_STORAGE_KEYS = ["token", "user", "cashier_auth_token", "cashier_auth_user"];
+
 const SIDEBAR_ITEMS = [
   "Dashboard",
   "Complaints",
@@ -1383,6 +1392,16 @@ function App() {
     setCustomerDashboardDetails(null);
   };
 
+  const handleSignOut = () => {
+    try {
+      AUTH_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+      sessionStorage.clear();
+    } catch (_error) {
+      // Ignore storage access errors (e.g. privacy mode) and still redirect.
+    }
+    window.location.href = LOGIN_URL;
+  };
+
   return (
     <div className="dashboard-shell">
       <aside className="sidebar">
@@ -1409,6 +1428,19 @@ function App() {
             </button>
           ))}
         </nav>
+
+        <div className="sidebar-footer">
+          <button type="button" className="nav-link logout-link" onClick={handleSignOut}>
+            <span className="nav-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" x2="9" y1="12" y2="12"></line>
+              </svg>
+            </span>
+            <span>Logout</span>
+          </button>
+        </div>
       </aside>
 
       <main className="content">

@@ -105,6 +105,25 @@
   color: #ff6d2d;
 }
 
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 0.35rem;
+  border-top: 1px solid #efebe8;
+}
+
+.logout-link {
+  width: 100%;
+  color: #c0392b;
+}
+
+.logout-link .nav-icon {
+  color: #c0392b;
+}
+
+.logout-link:hover {
+  background: #fdecea;
+}
+
 .content {
   padding: 0.72rem 0.95rem 1rem;
 }
