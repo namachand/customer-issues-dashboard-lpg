@@ -7,6 +7,40 @@ const api = axios.create({
   timeout: 15000,
 });
 
+export const AUTH_TOKEN_KEY = "token";
+export const AUTH_USER_KEY = "user";
+
+// Attach the stored bearer token (if any) to every request.
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// --- Auth ---------------------------------------------------------------
+export const identifyAuthMethod = async (identifier) => {
+  const response = await api.post("/auth/identify", { identifier });
+  return response.data;
+};
+
+export const loginWithPassword = async (identifier, password) => {
+  const response = await api.post("/auth/login/password", { identifier, password });
+  return response.data;
+};
+
+export const requestOtp = async (identifier) => {
+  const response = await api.post("/auth/login/otp/request", { identifier });
+  return response.data;
+};
+
+export const verifyOtp = async (identifier, otp) => {
+  const response = await api.post("/auth/login/otp/verify", { identifier, otp });
+  return response.data;
+};
+
 export const fetchCustomers = async (search = "") => {
   const response = await api.get("/customer-complaints/customers", {
     params: {
