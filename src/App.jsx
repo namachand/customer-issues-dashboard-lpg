@@ -198,6 +198,9 @@ const DEFAULT_TRANSFER_FORM = {
   depositLiability: "",
   reason: "",
   isRegulatorReceived: false,
+  emptyProductId: null,
+  emptyProductName: "",
+  emptyCylinderQty: "",
 };
 
 const DEFAULT_NAME_CHANGE_FORM = {
@@ -315,6 +318,8 @@ function Dashboard({ onSignOut }) {
   const [recentConnectionsLoading, setRecentConnectionsLoading] = useState(false);
   const [productSuggestions, setProductSuggestions] = useState([]);
   const [productSearchTimeout, setProductSearchTimeout] = useState(null);
+  const [transferProductSuggestions, setTransferProductSuggestions] = useState([]);
+  const [transferProductTimeout, setTransferProductTimeout] = useState(null);
   const [idProofUploading, setIdProofUploading] = useState(false);
 
   const [transferForm, setTransferForm] = useState(DEFAULT_TRANSFER_FORM);
@@ -1059,6 +1064,40 @@ function Dashboard({ onSignOut }) {
     });
   };
 
+  const handleTransferEmptyProductSearch = (value) => {
+    setTransferForm((previous) => ({
+      ...previous,
+      emptyProductName: value,
+      emptyProductId: null,
+    }));
+
+    if (transferProductTimeout) clearTimeout(transferProductTimeout);
+
+    if (!value.trim()) {
+      setTransferProductSuggestions([]);
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      try {
+        const rows = await searchConnectionProducts(value.trim());
+        setTransferProductSuggestions(rows);
+      } catch (_error) {
+        setTransferProductSuggestions([]);
+      }
+    }, 250);
+    setTransferProductTimeout(timeout);
+  };
+
+  const handleSelectTransferEmptyProduct = (product) => {
+    setTransferForm((previous) => ({
+      ...previous,
+      emptyProductId: Number(product.id),
+      emptyProductName: product.name || "Product",
+    }));
+    setTransferProductSuggestions([]);
+  };
+
   const handleIdProofUpload = async (event) => {
     const file = event.target.files?.[0] || null;
     if (!file) return;
@@ -1156,6 +1195,8 @@ function Dashboard({ onSignOut }) {
         depositLiability: Number(transferForm.depositLiability) || 0,
         reason: transferForm.reason,
         isRegulatorReceived: transferForm.isRegulatorReceived ? 1 : 0,
+        emptyProductId: transferForm.emptyProductId || null,
+        emptyCylinderQty: Number(transferForm.emptyCylinderQty) || 0,
       });
       setSuccessMessage("Transfer request sent successfully.");
       setTransferForm(DEFAULT_TRANSFER_FORM);
@@ -2180,6 +2221,63 @@ function Dashboard({ onSignOut }) {
                   <span>Regulator received</span>
                 </label>
               </div>
+
+              <div className="transfer-fields">
+                <label>Empty Cylinder Returned (optional)</label>
+                <div className="autosuggest-wrap">
+                  <input
+                    name="emptyProductName"
+                    value={transferForm.emptyProductName}
+                    onChange={(e) => handleTransferEmptyProductSearch(e.target.value)}
+                    placeholder="Search empty cylinder product…"
+                    autoComplete="off"
+                    onFocus={async () => {
+                      if (!transferForm.emptyProductName.trim()) {
+                        try {
+                          const rows = await searchConnectionProducts("");
+                          setTransferProductSuggestions(rows);
+                        } catch (_error) {
+                          setTransferProductSuggestions([]);
+                        }
+                      }
+                    }}
+                    onBlur={() => setTimeout(() => setTransferProductSuggestions([]), 200)}
+                  />
+                  {transferProductSuggestions.length ? (
+                    <div className="autosuggest-dropdown">
+                      {transferProductSuggestions.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className="autosuggest-item"
+                          onClick={() => handleSelectTransferEmptyProduct(item)}
+                        >
+                          <strong>{item.name}</strong>
+                          <span>{item.type}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              {transferForm.emptyProductId ? (
+                <div className="transfer-fields">
+                  <label>Empty Cylinder Quantity</label>
+                  <input
+                    name="emptyCylinderQty"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={transferForm.emptyCylinderQty}
+                    onChange={handleTransferInputChange}
+                    placeholder="Number of empty cylinders"
+                  />
+                  <p className="field-hint">
+                    This raises an empty-cylinder return request to the godown manager for approval.
+                  </p>
+                </div>
+              ) : null}
 
               <div className="transfer-actions">
                 <button type="button" className="primary-btn" disabled={transferSubmitting} onClick={handleSendTransferRequest}>
