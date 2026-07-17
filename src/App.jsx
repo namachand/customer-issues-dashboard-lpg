@@ -925,10 +925,11 @@ function Dashboard({ onSignOut }) {
     searchCustomerNameSuggestions("transfer-existing", value);
   };
 
-  const handleTransferNewCustomerNameChange = (event) => {
+  const handleTransferNewAgencyNameChange = (event) => {
     const value = event.target.value;
+    // Free-text agency name — this is NOT an existing customer, so no customer
+    // autosuggest here.
     setTransferForm((previous) => ({ ...previous, newCustomerName: value }));
-    searchCustomerNameSuggestions("transfer-new", value);
   };
 
   const handleNameChangeExistingNameChange = (event) => {
@@ -1168,15 +1169,7 @@ function Dashboard({ onSignOut }) {
       return;
     }
     if (!transferForm.newCustomerName.trim()) {
-      setErrorMessage("New customer name is required.");
-      return;
-    }
-    if (!transferForm.newCustomerMobile.trim()) {
-      setErrorMessage("New customer mobile is required.");
-      return;
-    }
-    if (!transferForm.newCustomerAddress.trim()) {
-      setErrorMessage("New customer address is required.");
+      setErrorMessage("New agency name is required.");
       return;
     }
     if (!transferForm.reason.trim()) {
@@ -1189,9 +1182,9 @@ function Dashboard({ onSignOut }) {
       setErrorMessage("");
       await createCustomerTransfer({
         existingCustomerId: transferForm.existingCustomerId,
-        newCustomerName: transferForm.newCustomerName,
-        newCustomerPhone: transferForm.newCustomerMobile,
-        newCustomerAddress: transferForm.newCustomerAddress,
+        newAgencyName: transferForm.newCustomerName,
+        newAgencyPhone: transferForm.newCustomerMobile,
+        newAgencyAddress: transferForm.newCustomerAddress,
         depositLiability: Number(transferForm.depositLiability) || 0,
         reason: transferForm.reason,
         isRegulatorReceived: transferForm.isRegulatorReceived ? 1 : 0,
@@ -2057,7 +2050,7 @@ function Dashboard({ onSignOut }) {
                   <div className="selected-product-chips">
                     {newConnectionForm.selectedProducts.map((product) => (
                       <span key={product.id} className="selected-product-chip">
-                        {product.name}{product.type ? ` (${product.type})` : ""}
+                        {product.name}{product.type ? ` (${product.type})` : ""} · ₹{Number(product.price || 0).toLocaleString("en-IN")}
                         <button
                           type="button"
                           aria-label={`Remove ${product.name}`}
@@ -2163,38 +2156,21 @@ function Dashboard({ onSignOut }) {
 
               {transferLookupLoading ? <p className="muted">Loading existing customer details...</p> : null}
 
-              <h3>New Customer Details</h3>
+              <h3>New Agency Details</h3>
 
               <div className="transfer-fields two-column">
                 <div>
-                  <label>New Customer Name *</label>
-                  <div className="autosuggest-wrap">
-                    <input name="newCustomerName" value={transferForm.newCustomerName} onChange={handleTransferNewCustomerNameChange} />
-                    {activeSuggestionField === "transfer-new" && customerNameSuggestions.length ? (
-                      <div className="autosuggest-dropdown">
-                        {customerNameSuggestions.map((item) => (
-                          <button
-                            key={item.id}
-                            type="button"
-                            className="autosuggest-item"
-                            onClick={() => handleSelectSuggestedCustomer("transfer-new", item)}
-                          >
-                            <strong>{item.name || "Customer"}</strong>
-                            <span>{item.consumer_number || "-"} • {item.phone || "-"}</span>
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
+                  <label>New Agency Name *</label>
+                  <input name="newCustomerName" value={transferForm.newCustomerName} onChange={handleTransferNewAgencyNameChange} placeholder="e.g. Bharat Gas - MG Road" />
                 </div>
                 <div>
-                  <label>Mobile</label>
+                  <label>Agency Mobile</label>
                   <input name="newCustomerMobile" value={transferForm.newCustomerMobile} onChange={handleTransferInputChange} />
                 </div>
               </div>
 
               <div className="transfer-fields">
-                <label>Address</label>
+                <label>Agency Address</label>
                 <input name="newCustomerAddress" value={transferForm.newCustomerAddress} onChange={handleTransferInputChange} />
               </div>
 
@@ -2294,7 +2270,7 @@ function Dashboard({ onSignOut }) {
                 {recentTransfers.map((item) => (
                   <article key={item.id} className="recent-transfer-row">
                     <div className="recent-row-head">
-                      <p>{item.existing_customer_name || item.existing_name || "Customer"} → {item.new_customer_name || item.new_name || "New Customer"}</p>
+                      <p>{item.existing_customer_name || item.existing_name || "Customer"} → {item.new_agency_name || item.new_customer_name || item.new_name || "New Agency"}</p>
                       <span className={`payment-chip ${String(item.status || "PENDING_MANAGER").toLowerCase().replaceAll(" ", "-")}`}>
                         {String(item.status || "PENDING_MANAGER")
                           .replace(/_/g, " ")
